@@ -31,10 +31,10 @@ The modeling pipeline should be executed in the following sequence:
 
 Follow the instructions provided in the "COMSOL_FEM" folder. For each electrode depth condition:
 
--Generate the coordinates of the neuronal components.
--Run the COMSOL FEM simulations for each contact diameter.
--Interpolate the FEM potentials at the generated neuronal coordinates.
--Format the interpolated potentials for use in the NEURON simulations.
+- Generate the coordinates of the neuronal components.
+- Run the COMSOL FEM simulations for each contact diameter.
+- Interpolate the FEM potentials at the generated neuronal coordinates.
+- Format the interpolated potentials for use in the NEURON simulations.
 
 The resulting FEM-interpolated potential files are used as inputs to the NEURON simulations.
 
@@ -42,9 +42,9 @@ The resulting FEM-interpolated potential files are used as inputs to the NEURON 
 
 Follow the instructions provided in the "NEURON_Simulations" folder. For each contact diameter within each depth condition:
 
--Import the corresponding FEM-interpolated potentials.
--Run the cortical column simulations in NEURON.
--Export the resulting neuronal spike-time data.
+- Import the corresponding FEM-interpolated potentials.
+- Run the cortical column simulations in NEURON.
+- Export the resulting neuronal spike-time data.
 
 The spike-time data are used as inputs for the neural activation analysis.
 
@@ -52,31 +52,33 @@ The spike-time data are used as inputs for the neural activation analysis.
 
 Follow the instructions provided in the "Results" folder. For each contact diameter within each depth condition:
 
--Import the corresponding spike-time data.
--Compute neural activation measures, including activation distances, activated cell IDs, and spike counts.
--Perform discrimination threshold estimation by fitting the model-derived activation data to the experimental data.
--Generate the results corresponding to Figures 6, 7, and 8, and Supplementary Figures S3, S4, S5, S6, S7 and S8 in the paper.
+- Import the corresponding spike-time data.
+- Compute neural activation measures, including activation distances, activated cell IDs, and spike counts.
+- Perform discrimination threshold estimation by fitting the model-derived activation data to the experimental data.
+- Generate the results corresponding to Figures 6, 7, and 8, and Supplementary Figures S3, S4, S5, S6, S7 and S8 in the paper.
 
 SOFTWARE REQUIREMENTS
 
--COMSOL Multiphysics 6.3
--NEURON 7.6
--MATLAB R2022b
+- COMSOL Multiphysics 6.3
+- NEURON 7.6
+- MATLAB R2022b
 
 FOLDER STRUCTURE
 
--COMSOL_FEM/ : COMSOL FEM models, neuronal coordinate generation, potential interpolation.
--NEURON_Simulations/ : NEURON cortical column model, simulation scripts, and spike-time extraction.
--Results/ : MATLAB scripts and data-analysis procedures for neural activation analysis and discrimination threshold estimation.
+- COMSOL_FEM/ : COMSOL FEM models, neuronal coordinate generation, potential interpolation.
+- NEURON_Simulations/ : NEURON cortical column model, simulation scripts, and spike-time extraction.
+- Results/ : MATLAB scripts and data-analysis procedures for neural activation analysis and discrimination threshold estimation.
 
 DATA AVAILABILITY
 
 The code and model files required to reproduce the simulations are provided in this repository. The processed data used to generate the results figures are also provided in the Results/ directory. The data are organized by depth condition under the following directories:
 
-Results/Reference_Depth/activation_data_ConvexHull/
-Results/Depth_down150um/activation_data_ConvexHull/
-Results/Depth_up150um/activation_data_ConvexHull/
+- Results/Reference_Depth/activation_data_ConvexHull/
+- Results/Depth_down150um/activation_data_ConvexHull/
+- Results/Depth_up150um/activation_data_ConvexHull/
 
 The complete modeling pipeline can be reproduced by following the instructions in the COMSOL_FEM, NEURON_Simulations, and Results folders in the order specified above.
+
+Alternatively, the final results figures can be generated using the provided processed data by directly following STEP 3 and STEP 4 in Results/README.txt
 
 Alternatively, the final results figures can be generated using the provided processed data by directly following STEP 3 and STEP 4 in Results/README.txt
