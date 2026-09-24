@@ -1,0 +1,421 @@
+/* 
+* Loads model files and creates GUI panels. Includes procedure for generating shape plots of cells
+* AUTHOR: Aman Aberra, Duke University
+* CONTACT: aman.aberra@duke.edu
+*/
+
+// cell_id = 6 // leave unset until user selects cell
+
+{load_file("nrngui.hoc")}
+ {load_file("interpCoordinates.hoc")}
+ {load_file("setPointers.hoc")}
+// {load_file("calcVe.hoc")}
+// {load_file("stimWaveform.hoc")}
+{load_file("cellChooser.hoc")}
+
+{load_file("setParams.hoc")}
+{load_file("editMorphology.hoc")} // procs for editing cell morphology
+
+// {load_file("rig.ses")}
+
+// createPanels() // in setParams.hoc
+
+celsius = 37 // default temp
+
+setParamsAdultRat()
+cell_chooser(cell_id) 
+
+steps_per_ms = 40
+dt = .025
+secondorder = 0
+tstop = 850
+
+objref RLx
+objref input_file1
+RLx = new Vector() 		
+input_file1 = new File()
+input_file1.ropen("realx.dat") 
+RLx.scanf(input_file1,6410)
+input_file1.close()
+
+objref RLy
+objref input_file2
+RLy = new Vector() 		
+input_file2 = new File()
+input_file2.ropen("realy.dat") 
+RLy.scanf(input_file2,6410)
+input_file2.close()
+
+objref RLz
+objref input_file3
+RLz = new Vector() 		
+input_file3 = new File()
+input_file3.ropen("realz.dat") 
+RLz.scanf(input_file3,6410)
+input_file3.close()
+
+objref RLang
+objref input_file6
+RLang = new Vector() 		
+input_file6 = new File()
+input_file6.ropen("realang.dat") 
+RLang.scanf(input_file6,6410)
+input_file6.close()
+
+objref tot_cell_count
+objref input_file7
+tot_cell_count = new Vector() 		
+input_file7 = new File()
+input_file7.ropen("cell_cnt.dat") 
+tot_cell_count.scanf(input_file7,25)
+input_file7.close()
+
+objref tot_comp_count
+objref input_file8
+tot_comp_count = new Vector() 		
+input_file8 = new File()
+input_file8.ropen("comp_cnt.dat") 
+tot_comp_count.scanf(input_file8,6410)
+input_file8.close()
+
+// COMSOL FEM potentials
+objref IN_MATRIX1
+objref input_file1a
+IN_MATRIX1 = new Matrix() 		
+input_file1a = new File()
+input_file1a.ropen("fem_pot_G1_S1_5um.dat") 
+IN_MATRIX1.scanf(input_file1a,9011204,4)
+input_file1a.close()
+
+// To track and store Vm_axon every 10 time steps
+objref efmm_tracker
+efmm_tracker = new Matrix(tot_cell_count.x[cell_id-1],1)
+
+ 
+sigma_e = 2.76e-7 
+
+DEL = 200 // Stimulation start time
+DUR = 0.2 
+Space_Constant = 0.1 
+
+AMP = -10*(10^-3)*base_amp_nA // Reference/baseline amplitude in uA
+AMP1 = -1*(10^-3)*disc_amp_nA // Discrimination threshold amplitude in uA (delta)
+FREQ = 200
+BLOCK_DUR = 325 // Duration of each of the two stim blocks
+NO_OF_STIM_PULSE_PER_BLOCK=(BLOCK_DUR/(1000/FREQ))
+NO_OF_BLOCKS=2
+
+// COMSOL current source center coordinates
+ELECx1=-150
+ELECy1=3462.5
+ELECz1=-49.5
+
+// offsets to match NEURON coordinates with COMSOL reference
+xoffset=ELECx1-200
+yoffset=3950
+zoffset=ELECz1-200
+
+ELECx2=200+400
+ELECy2=1200
+ELECz2=200
+
+Space_Constant1 = 0.001 // This should be 0 ideally since we only have 1 electrode contact
+
+ampratio_xtra=0
+
+objref ydeste, r1w 
+
+
+proc calcesI(){ local x0,y0,z0,sigma_e,r,ange,comp_count
+	x0 = $1 
+	y0 = $2
+	z0 = $3
+	ange = $4
+    sigma_e = $5
+    comp_count = $6 
+      
+
+            // To keep track of component index, resets at every new cell
+						count = -1
+	forall {
+
+		if (ismembrane("xtra")){
+			for(x,0){
+			
+			count=count+1
+
+				es1_xtra(x) = IN_MATRIX1.x[comp_count+count][3]*(10^3)
+				es2_xtra(x) = 0
+				
+			}
+		}
+	}		
+}
+
+objref stim_amp, stim_time
+stim_amp = new Vector()
+stim_time = new Vector()
+
+proc stim_waveform() {
+  // this uses interpolated play
+  // index    0  1    2    3        4        5          
+  // stim vec 0, 0,   1,   1,       0        0          
+  // time vec 0, DEL, DEL, DEL+DUR, DEL+DUR, DEL+DUR+1
+  //  really  0, $1,  $1,  $1+$2,   $1+$2,   $1+$2+1
+  // first the stim vector
+
+  stim_amp.resize(10*$5*$6)
+  stim_time.resize(10*$5*$6)
+
+  stim_amp.fill(0)  
+
+  for itc2=0,$6-1{
+  
+	  for itc1=0,$5-1{
+	  
+	  stim_amp.x[2+(10*itc1)+(10*itc2*$5)]=1*($3+(itc2*$7))
+	  stim_amp.x[3+(10*itc1)+(10*itc2*$5)]=1*($3+(itc2*$7))
+	  stim_amp.x[6+(10*itc1)+(10*itc2*$5)]=-1*($3+(itc2*$7)) 
+	  stim_amp.x[7+(10*itc1)+(10*itc2*$5)]=-1*($3+(itc2*$7))
+	 
+	  }
+  
+  }
+  
+
+  for itc=0,(($5*$6)-1){
+  
+  stim_time.x[1+(10*itc)]=$1+((1000/$4)*itc)
+  stim_time.x[2+(10*itc)]=$1+((1000/$4)*itc)
+  stim_time.x[3+(10*itc)]=$1+$2+((1000/$4)*itc)
+  stim_time.x[4+(10*itc)]=$1+$2+((1000/$4)*itc)
+  stim_time.x[5+(10*itc)]=$1+$2+0.053+((1000/$4)*itc)
+  stim_time.x[6+(10*itc)]=$1+$2+0.053+((1000/$4)*itc)
+  stim_time.x[7+(10*itc)]=$1+$2+0.053+$2+((1000/$4)*itc)
+  stim_time.x[8+(10*itc)]=$1+$2+0.053+$2+((1000/$4)*itc)
+  stim_time.x[9+(10*itc)]=$1+$2+0.053+$2+0.1+((1000/$4)*itc)
+  
+  }
+
+}
+
+
+proc attach_stim() {
+  forall {  
+      if (ismembrane("xtra")) {
+        stim_amp.play(&stim_xtra, stim_time, 1) 
+      }
+	  }
+	  }
+
+proc setstim() {
+  del = $1
+  dur = $2
+  amp = $3
+  freq = $4
+  no_of_stim_pulse=$5
+  no_of_blocks=$6
+  amp1=$7
+  stim_waveform(del, dur, amp, freq, no_of_stim_pulse, no_of_blocks, amp1)  
+  attach_stim()
+}
+
+objref tvec
+double vm_soma[1]
+
+tvec = new Vector()
+
+objref vm[1]
+vm[0] = new Vector()
+
+objref fihprog_
+
+	objref myout
+    objref myout1
+
+
+proc recvm(){
+	
+	if (t>=200){
+	
+	vm_soma=cell.soma[0].v(0.5)
+	tvec.append(t)
+	vm.append(vm_soma)
+	
+	}
+	
+    cvode.event(t+dt, "recvm()")
+}
+	
+	
+	tot_nseg=0
+
+forsec Myelin_secList {
+tot_nseg=tot_nseg+nseg
+}
+
+forsec Node_secList {
+tot_nseg=tot_nseg+nseg
+}
+
+forsec Unmyelin_secList {
+tot_nseg=tot_nseg+nseg
+}
+
+
+objref efmm[1]
+for i=0, 0{
+efmm[i] = new Matrix(((tstop-200)*4),tot_nseg+1)}
+	
+proc rec_vm_axon(){
+
+	n_run1=$1
+
+	if (t>=200){
+
+	if (efmm_tracker.x[($1)-1][0]==10){
+
+		efmm[0].x[(t-200)/(dt*10)][0] = t
+	    
+		cnt=1
+		
+		kpo=0
+		forsec Myelin_secList {
+		for j=1,nseg{
+		abc=1/(nseg+1)
+		efmm[0].x[(t-200)/(dt*10)][cnt] = Myelin[kpo].v(j*abc)
+		cnt=cnt+1
+		}
+		kpo=kpo+1
+		}	
+		
+		kpo=0
+		forsec Node_secList {
+		for j=1,nseg{
+		abc=1/(nseg+1)
+		efmm[0].x[(t-200)/(dt*10)][cnt] = Node[kpo].v(j*abc)
+		cnt=cnt+1
+		}
+			kpo=kpo+1
+		}
+		
+		kpo=0
+		forsec Unmyelin_secList {
+		for j=1,nseg{
+		abc=1/(nseg+1)
+		efmm[0].x[(t-200)/(dt*10)][cnt] = Unmyelin[kpo].v(j*abc)
+		cnt=cnt+1
+		}
+			kpo=kpo+1
+		}
+		efmm_tracker.x[($1)-1][0]=1 //Reset tracker
+
+	} else {
+
+		efmm_tracker.x[($1)-1][0]+=1
+	}
+
+	
+	}
+	
+	cvode.event(t+dt, "rec_vm_axon(n_run1)")
+}
+
+
+proc progress() {
+    n_run1=$1
+	print "t=",t
+
+	 strdef dir
+	 sprint(dir, "Vm/%dnA_%dnA/", base_amp_nA,disc_amp_nA) 
+
+	 strdef d,data1,data_n1,dar
+        d =".dat"
+        data1 = "Vm_"
+		dar = "_"
+
+    sprint(data_n1,"%s%s%d%s%d%s",dir,data1,cell_id,dar,n_run1,d)
+	strdef spkflnm1
+    sprint(spkflnm1, data_n1)
+	myout = new File()
+
+    	if (t>=200){
+
+	if (t == 200){
+		myout.wopen(spkflnm1)
+		print "Starting to write Vm for n_run1 = ", n_run1
+	} else {
+  myout.aopen(spkflnm1)
+  } 
+    for i=0, tvec.size-1 {
+       myout.printf("%g %g\n", tvec.x[i], vm.x[i])	
+    	}
+    	myout.close()     
+	vm.resize(0)
+	tvec.resize(0) 
+	
+	}
+	
+	
+	strdef data2,data_n2
+    data2 = "Vm_axon_"
+    sprint(data_n2,"%s%s%d%s%d%s",dir,data2,cell_id,dar,n_run1,d)
+
+	myout1 = new File()
+	
+	if (t>=200){
+
+	myout1.wopen(data_n2)
+	
+	for i=0, (((tstop-200)*4)-1){
+	for j=0, tot_nseg{
+       myout1.printf("%g\t", efmm[0].x[i][j])	
+    	}
+       myout1.printf("\n")			
+		}
+		}
+
+		
+	  if (t == 0) {
+	recvm()
+	rec_vm_axon(n_run1)
+}    	
+	cvode.event(t+10, "progress(n_run1)")
+}
+
+
+proc run_all(){
+        n_run1=$1
+
+        efmm_tracker.x[n_run1-1][0] = 10  // Start with 10 to save first time point
+
+	    calcesI(RLx.x[tot_cell_count.sum(0,cell_id-1)-tot_cell_count.x[cell_id-1]+n_run1-1],RLy.x[tot_cell_count.sum(0,cell_id-1)-tot_cell_count.x[cell_id-1]+n_run1-1],RLz.x[tot_cell_count.sum(0,cell_id-1)-tot_cell_count.x[cell_id-1]+n_run1-1],RLang.x[tot_cell_count.sum(0,cell_id-1)-tot_cell_count.x[cell_id-1]+n_run1-1],sigma_e,tot_comp_count.sum(0,tot_cell_count.sum(0,cell_id-1)-tot_cell_count.x[cell_id-1]+n_run1-1)-tot_comp_count.x[tot_cell_count.sum(0,cell_id-1)-tot_cell_count.x[cell_id-1]+n_run1-1])
+        setstim(DEL,DUR,AMP,FREQ,NO_OF_STIM_PULSE_PER_BLOCK,NO_OF_BLOCKS,AMP1)
+		
+		sprint(cell_dir,"cells/%s",cell_names.o(cell_id-1).s)
+        chdir(cell_dir)
+		cell.synapses.load_synapses(cell,RLx.x[tot_cell_count.sum(0,cell_id-1)-tot_cell_count.x[cell_id-1]+n_run1-1],RLy.x[tot_cell_count.sum(0,cell_id-1)-tot_cell_count.x[cell_id-1]+n_run1-1],RLz.x[tot_cell_count.sum(0,cell_id-1)-tot_cell_count.x[cell_id-1]+n_run1-1],RLang.x[tot_cell_count.sum(0,cell_id-1)-tot_cell_count.x[cell_id-1]+n_run1-1],ELECx1,ELECy1,ELECz1,Space_Constant,ELECx2,ELECy2,ELECz2,Space_Constant1)
+		chdir(current_dir)
+		
+	    cell.synapses.reset_synapses()
+	    cell.synapses.update_synapses()
+
+
+ {fihprog_ = new FInitializeHandler("progress(n_run1)")}
+run()
+}
+
+objref pc
+pc = new ParallelContext()
+{pc.runworker()}
+
+proc batchrun() {
+
+	for md_inst1 = 1, tot_cell_count.x[cell_id-1] {
+						pc.submit("run_all",md_inst1)
+}
+	while (pc.working()) {
+	}
+	
+}
+batchrun()
