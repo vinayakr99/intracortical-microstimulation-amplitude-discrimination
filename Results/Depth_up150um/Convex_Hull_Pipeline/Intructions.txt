@@ -1,0 +1,6 @@
+It uses the convex hull algorithm from (https://www.mathworks.com/matlabcentral/fileexchange/10226-inhull). The pipeline sequence is as follows, 
+
+- "shank_coordinates_all_diameters.m" stores all diameter shank coordinates and saves into "electrode_axon_xyz.mat". This is referenced based on the NEURON distribution coordinates.
+
+- Move "electrode_axon_xyz.mat" into the same directory as "soma_analysis_ConvexHull.m", and make sure 'inhull.m' is in that same directory.
+
