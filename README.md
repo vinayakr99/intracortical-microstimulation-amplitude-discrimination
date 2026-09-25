@@ -5,7 +5,7 @@ This repository contains the model and data analysis code associated with the pa
 E. Su, V. Retheesh, K. Kumaravelu, S. Sharma, W. M. Grill and K. Otto (2026) 
 Ultra-Micro Electrodes Support Low-Current Amplitude Discrimination in Intracortical Microstimulation.
 
-This model was contributed by K. Kumaravelu and V. Retheesh.
+This model was contributed by K. Kumaravelu and V. Retheesh. For questions regarding the model or code, please contact vinayak.retheesh@duke.edu .
 
 MODEL DESCRIPTION
 
@@ -55,7 +55,7 @@ Follow the instructions provided in the "Results" folder. For each contact diame
 - Import the corresponding spike-time data.
 - Compute neural activation measures, including activation distances, activated cell IDs, and spike counts.
 - Perform discrimination threshold estimation by fitting the model-derived activation data to the experimental data.
-- Generate the results corresponding to Figures 6, 7, and 8, and Supplementary Figures S3, S4, S5, S6, S7 and S8 in the paper.
+- Generate the results corresponding to Figures 6, 7, and 8, and Supplementary Figures S3, S4, S5, S7 and S8 in the paper.
 
 SOFTWARE REQUIREMENTS
 
@@ -78,7 +78,5 @@ The code and model files required to reproduce the simulations are provided in t
 - Results/Depth_up150um/activation_data_ConvexHull/
 
 The complete modeling pipeline can be reproduced by following the instructions in the COMSOL_FEM, NEURON_Simulations, and Results folders in the order specified above.
-
-Alternatively, the final results figures can be generated using the provided processed data by directly following STEP 3 and STEP 4 in Results/README.txt
 
 Alternatively, the final results figures can be generated using the provided processed data by directly following STEP 3 and STEP 4 in Results/README.txt
