@@ -98,7 +98,7 @@ DEL = 200 // Stimulation start time
 DUR = 0.2 
 Space_Constant = 0.1 
 
-AMP = -10*(10^-3)*base_amp_nA // Reference/baseline amplitude in uA
+AMP = -1*(10^-3)*base_amp_nA // Reference/baseline amplitude in uA
 AMP1 = -1*(10^-3)*disc_amp_nA // Discrimination threshold amplitude in uA (delta)
 FREQ = 200
 BLOCK_DUR = 325 // Duration of each of the two stim blocks
